@@ -53,6 +53,32 @@ Panel {
   readonly property string fetchScript: decodeURIComponent(Qt.resolvedUrl("bin/fetch").toString().replace(/^file:\/\//, ""))
 
   property var launches: []
+  // What the list shows: upcoming launches plus finished ones still worth
+  // watching (see Model.isListed). Reassigned only when the set of ids
+  // changes, so the rows aren't rebuilt on every clock tick.
+  property var shownLaunches: []
+  readonly property real recentHours: Math.max(0, Number(setting("recentHours", 3)) || 0)
+
+  function refreshShown() {
+    var now = Date.now()
+    var next = launches.filter(function(l) { return Model.isListed(l, now, root.recentHours) })
+    var same = next.length === shownLaunches.length
+    for (var i = 0; same && i < next.length; i++) same = next[i] === shownLaunches[i]
+    if (!same) {
+      shownLaunches = next
+      selectedIndex = Math.max(0, Math.min(selectedIndex, next.length - 1))
+    }
+  }
+
+  onLaunchesChanged: refreshShown()
+  onRecentHoursChanged: refreshShown()
+
+  Timer {
+    interval: 60 * 1000
+    running: true
+    repeat: true
+    onTriggered: root.refreshShown()
+  }
   property var stations: ({})
   property var tle: ({})
   property real lastUpdated: 0
@@ -336,8 +362,8 @@ Panel {
   }
   readonly property var tabUpcoming: {
     var out = []
-    for (var i = 0; i < launches.length; i++)
-      if (launches[i].station && launches[i].station.key === tab) out.push(launches[i])
+    for (var i = 0; i < shownLaunches.length; i++)
+      if (shownLaunches[i].station && shownLaunches[i].station.key === tab) out.push(shownLaunches[i])
     return out
   }
 
@@ -359,14 +385,14 @@ Panel {
       return
     }
     if (dx !== 0) { cycleTab(dx); return }
-    if (launches.length === 0) return
-    selectedIndex = Math.max(0, Math.min(launches.length - 1, selectedIndex + dy))
+    if (shownLaunches.length === 0) return
+    selectedIndex = Math.max(0, Math.min(shownLaunches.length - 1, selectedIndex + dy))
     scrollToItem(launchRepeater.itemAt(selectedIndex))
   }
 
   function activate() {
     if (detailLaunch) { playing = !playing; if (playing && simSeconds >= 4 * 3600) simOffset = 0; return }
-    if (tab === "launches") openDetail(launches[selectedIndex])
+    if (tab === "launches") openDetail(shownLaunches[selectedIndex])
   }
 
   function handleText(t) {
@@ -660,15 +686,15 @@ Panel {
             spacing: Style.space(2)
 
             Label {
-              visible: root.launches.length === 0 && root.error === ""
-              text: "Fetching launch schedule…"
+              visible: root.shownLaunches.length === 0 && root.error === ""
+              text: root.launches.length === 0 ? "Fetching launch schedule…" : "No upcoming launches right now."
               color: root.dim
               font.italic: true
             }
 
             Repeater {
               id: launchRepeater
-              model: root.launches
+              model: root.shownLaunches
 
               Rectangle {
                 id: row
@@ -773,7 +799,7 @@ Panel {
             }
 
             Caption {
-              visible: root.launches.length > 0
+              visible: root.shownLaunches.length > 0
               topPadding: Style.space(6)
               text: "↑↓ SELECT · ⏎ DETAILS · ←→ TABS · R REFRESH  —  DATA: THE SPACE DEVS LAUNCH LIBRARY"
               font.pixelSize: Style.font.caption - 1

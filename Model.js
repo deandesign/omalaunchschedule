@@ -171,6 +171,19 @@ function parseLaunch(r) {
   }
 }
 
+// Launch Library's "upcoming" feed keeps launches for about a day after
+// liftoff. Keep a finished launch only while it is still worth watching: its
+// webcast is live, it is in flight, or it lifted off less than `recentHours`
+// ago. A launch whose NET has passed without a result (a slip or a hold that
+// the feed hasn't caught up with yet) is still upcoming, so it always stays.
+function isListed(launch, nowMs, recentHours) {
+  if (!launch) return false
+  if (isNaN(launch.net) || launch.net > nowMs) return true
+  if (launch.webcastLive || launch.status === "In Flight") return true
+  if (launch.kind !== "success" && launch.kind !== "fail") return true
+  return nowMs - launch.net < Math.max(0, Number(recentHours) || 0) * 3600000
+}
+
 function parseLaunches(raw) {
   try {
     var data = JSON.parse(str(raw))

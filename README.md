@@ -22,6 +22,9 @@ track against its destination.
 
 - The next 14 launches with status (GO, TBD, TBC, In Flight, Success), provider,
   rocket, pad, local launch time and countdown.
+- Finished launches stay for a few hours after liftoff (3 by default) and
+  while their webcast is live or the vehicle is in flight, so you can follow
+  one right after it launches; after that only upcoming launches remain.
 - Badges for live webcasts, crew count, and missions bound for the ISS or
   Tiangong.
 
@@ -137,6 +140,7 @@ Set inline on the widget's entry in `~/.config/omarchy/shell.json`:
 |---|---|---|
 | `showCountdown` | `true` | Show the countdown next to the rocket |
 | `countdownHours` | `48` | Only show it when the next launch is this close |
+| `recentHours` | `3` | Hours a finished launch stays in the list (live or in-flight launches always stay; `0` hides the rest at once) |
 | `icon` | `󱓞` | Bar glyph (any Nerd Font icon) |
 
 ```json
