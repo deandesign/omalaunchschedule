@@ -1,0 +1,71 @@
+#!/usr/bin/env bash
+# Cached fetches for the launch schedule panel.
+#
+#   fetch launches|stations|tle [force]
+#
+# Prints the cached JSON on stdout. The Launch Library 2 free tier allows
+# ~15 requests an hour, so every source is cached on disk and only refetched
+# when stale; "force" shortens the max age but never below five minutes.
+# A failed fetch falls back to the last good copy.
+
+set -u
+
+cache="${XDG_CACHE_HOME:-$HOME/.cache}/omarchy-launch-schedule"
+mkdir -p "$cache"
+
+api="https://ll.thespacedevs.com/2.3.0"
+agent="omarchy-launch-schedule/1.0 (+https://github.com/deandesign/omalaunchschedule)"
+name="${1:-}"
+force="${2:-}"
+
+fresh() {
+  local file=$1 maxAge=$2
+  [[ $force == force ]] && ((maxAge > 300)) && maxAge=300
+  [[ -s $file ]] && (($(date +%s) - $(stat -c %Y "$file") < maxAge))
+}
+
+get() {
+  local url=$1 out=$2
+  if curl -fsS --max-time 25 -A "$agent" "$url" -o "$out.tmp" && jq -e . "$out.tmp" >/dev/null 2>&1; then
+    mv "$out.tmp" "$out"
+  else
+    rm -f "$out.tmp"
+    return 1
+  fi
+}
+
+case "$name" in
+  launches)
+    file="$cache/launches.json"
+    fresh "$file" 1800 || get "$api/launches/upcoming/?limit=14&mode=detailed" "$file"
+    ;;
+
+  stations)
+    # Active stations, plus the crew of each station's current expedition.
+    file="$cache/stations.json"
+    if ! fresh "$file" 21600; then
+      tmp="$cache/stations-raw.json"
+      if get "$api/space_stations/?status__ids=1&mode=detailed" "$tmp"; then
+        expeditions="[]"
+        for id in $(jq -r '.results[].active_expeditions[]?.id' "$tmp"); do
+          if get "$api/expeditions/$id/?mode=detailed" "$cache/expedition-$id.json"; then
+            expeditions=$(jq -c --slurpfile e "$cache/expedition-$id.json" '. + $e' <<<"$expeditions")
+          fi
+        done
+        jq -c --argjson e "$expeditions" '{stations: .results, expeditions: $e}' "$tmp" >"$file.tmp" && mv "$file.tmp" "$file"
+      fi
+    fi
+    ;;
+
+  tle)
+    file="$cache/tle.json"
+    fresh "$file" 21600 || get "https://celestrak.org/NORAD/elements/gp.php?GROUP=stations&FORMAT=json" "$file"
+    ;;
+
+  *)
+    echo "usage: fetch launches|stations|tle [force]" >&2
+    exit 2
+    ;;
+esac
+
+[[ -s $file ]] && cat "$file"

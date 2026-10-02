@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "id": "io.github.deandesign.launch-schedule",
+  "name": "Launch Schedule",
+  "version": "1.0.0",
+  "author": "Dean White",
+  "license": "MIT",
+  "description": "Upcoming space launches, live webcasts, crew, and a text-mode trajectory globe",
+  "homepage": "https://github.com/deandesign/omalaunchschedule",
+  "repository": "https://github.com/deandesign/omalaunchschedule",
+  "kinds": [
+    "bar-widget"
+  ],
+  "entryPoints": {
+    "barWidget": "BarWidget.qml"
+  },
+  "barWidget": {
+    "displayName": "Launch Schedule",
+    "description": "Rocket icon with countdown to the next launch; click for schedule, streams, crew and ground tracks",
+    "category": "Info",
+    "allowMultiple": false,
+    "defaultSection": "right",
+    "defaults": {
+      "showCountdown": true,
+      "countdownHours": 48,
+      "icon": "󱓞"
+    },
+    "schema": [
+      {
+        "key": "showCountdown",
+        "type": "boolean",
+        "label": "Show countdown in bar",
+        "defaultValue": true,
+        "description": "Show time to the next launch next to the icon when it is close."
+      },
+      {
+        "key": "countdownHours",
+        "type": "integer",
+        "label": "Countdown window (hours)",
+        "min": 1,
+        "max": 336,
+        "step": 1,
+        "defaultValue": 48,
+        "description": "Only show the countdown when the next launch is within this many hours."
+      },
+      {
+        "key": "icon",
+        "type": "string",
+        "label": "Icon glyph",
+        "defaultValue": "󱓞"
+      }
+    ]
+  }
+}
