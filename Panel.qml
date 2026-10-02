@@ -57,7 +57,7 @@ Panel {
   // watching (see Model.isListed). Reassigned only when the set of ids
   // changes, so the rows aren't rebuilt on every clock tick.
   property var shownLaunches: []
-  readonly property real recentHours: Math.max(0, Number(setting("recentHours", 3)) || 0)
+  readonly property real recentHours: Math.max(0, Number(setting("recentHours", 24)) || 0)
 
   function refreshShown() {
     var now = Date.now()

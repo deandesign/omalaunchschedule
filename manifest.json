@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "io.github.deandesign.launch-schedule",
   "name": "Launch Schedule",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "author": "Dean White",
   "license": "MIT",
   "description": "Upcoming space launches, live webcasts, crew, and a text-mode trajectory globe",
@@ -24,7 +24,7 @@
       "showCountdown": true,
       "countdownHours": 48,
       "icon": "󱓞",
-      "recentHours": 3
+      "recentHours": 24
     },
     "schema": [
       {
@@ -51,8 +51,8 @@
         "min": 0,
         "max": 24,
         "step": 1,
-        "defaultValue": 3,
-        "description": "How long a launch stays in the list after liftoff. Launches with a live webcast or still in flight always stay; 0 removes the rest as soon as they finish."
+        "defaultValue": 24,
+        "description": "How long a launch stays in the list after liftoff. Launches with a live webcast or still in flight always stay; 0 removes the rest as soon as they finish. Launch Library drops launches about 24 hours after liftoff, so 24 is the effective maximum."
       },
       {
         "key": "icon",
